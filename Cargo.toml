@@ -1,0 +1,23 @@
+[package]
+name = "bcr-court"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+tracing = { version = "0.1" }
+tracing-log = { version = "0.2" }
+tracing-subscriber = { version = "0.3" }
+tokio = { version = "1", features = ["signal", "rt-multi-thread"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+config = { version = "0.15" }
+anyhow = { version = "1" }
+axum = { version = "0.8", features = ["macros"] }
+askama = "0.14"
+tower-http = { version = "0.6", features = ["fs"] }
+thiserror = { version = "2" }
+async-trait = "0.1"
+tokio-postgres = { version = "0.7", features = ["with-chrono-0_4"] }
+deadpool-postgres = "0.14"
+bcr-wdc-webapi = { git = "https://github.com/BitcreditProtocol/wildcat", tag = "v0.5.0" }

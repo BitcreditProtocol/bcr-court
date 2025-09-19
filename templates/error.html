@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+    <div class="centered">
+        <div>There was an error: <strong class="error">{{ error.to_string() }}</strong></div>
+    </div>
+{% endblock %}

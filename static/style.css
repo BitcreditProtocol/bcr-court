@@ -1,0 +1,37 @@
+:root {
+    --color-bg: #fefbf1;
+    --color-text: #111111;
+    --padding-base: 0.5rem;
+    --margin-base: 0.5rem;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: Arial, sans-serif;
+    margin: var(--margin-base);
+}
+
+.container {
+    max-width: 1140px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hidden {
+    display: none;
+}
+
+
+main {
+    padding: var(--padding-base) 0 var(--padding-base) 0;
+}
+
+.logo img {
+    display:block;
+    border:0;
+    outline:none;
+    text-decoration:none;
+    height:auto;
+}

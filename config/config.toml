@@ -1,0 +1,6 @@
+address = "0.0.0.0:8000"
+log_level = "INFO"
+db_user = "postgres"
+db_password = "password"
+db_name = ""
+db_host = "localhost"
