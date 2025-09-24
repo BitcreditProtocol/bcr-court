@@ -30,4 +30,4 @@ RUN chmod +x /bcr-court/bcr-court
 # Expose server port
 EXPOSE 8000
 
-CMD ["/bcr-court/bcr-court", "--listen-address=0.0.0.0:8000"]
+CMD ["/bcr-court/bcr-court"]

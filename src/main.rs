@@ -1,10 +1,14 @@
 use axum::extract::FromRef;
 use config::{Environment, File};
-use std::{env, str::FromStr, sync::Arc};
-use tracing::{info, level_filters::LevelFilter};
+use std::{env, net::SocketAddr, str::FromStr, sync::Arc};
+use tokio::sync::Mutex;
+use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::{Layer, layer::SubscriberExt};
 
-use crate::db::shared_bills::SharedBillsStore;
+use crate::{
+    db::{shared_bill::SharedBillStore, user::UserStore},
+    web::rate_limit::RateLimiter,
+};
 
 mod db;
 mod web;
@@ -17,6 +21,7 @@ pub struct Config {
     pub db_password: String,
     pub db_name: String,
     pub db_host: String,
+    pub bitcoin_network: bitcoin::Network,
 }
 
 impl Config {
@@ -56,7 +61,10 @@ impl Default for Config {
 
 #[derive(Clone, FromRef)]
 pub struct Ctx {
-    pub shared_bills_store: Arc<dyn SharedBillsStore>,
+    pub shared_bill_store: Arc<dyn SharedBillStore>,
+    pub user_store: Arc<dyn UserStore>,
+    pub config: Config,
+    pub rate_limiter: Arc<Mutex<RateLimiter>>,
 }
 impl Ctx {
     pub async fn new(cfg: &Config) -> Result<Self, anyhow::Error> {
@@ -64,7 +72,10 @@ impl Ctx {
         db.init().await?;
         let store = Arc::new(db);
         Ok(Self {
-            shared_bills_store: store,
+            shared_bill_store: store.clone(),
+            user_store: store,
+            config: cfg.to_owned(),
+            rate_limiter: Arc::new(Mutex::new(RateLimiter::new())),
         })
     }
 }
@@ -80,19 +91,23 @@ async fn main() -> Result<(), anyhow::Error> {
     tracing::subscriber::set_global_default(subscriber)
         .expect("tracing::subscriber::set_global_default");
 
-    let listener = tokio::net::TcpListener::bind(&cfg.address)
-        .await
-        .expect("failed to bind listener");
-
-    info!("Server running at http://{}", cfg.address);
-
-    let ctx = Ctx::new(&cfg).await?;
-    let router = web::router(ctx, &cfg);
-
-    axum::serve(listener, router)
+    if let Ok(listener) = tokio::net::TcpListener::bind(&cfg.address).await {
+        info!(
+            "Server running at http://{} on {} with log-level={}",
+            cfg.address, cfg.bitcoin_network, cfg.log_level
+        );
+        let ctx = Ctx::new(&cfg).await?;
+        let router = web::router(ctx, &cfg);
+        axum::serve(
+            listener,
+            router.into_make_service_with_connect_info::<SocketAddr>(),
+        )
         .with_graceful_shutdown(shutdown_handler())
-        .await
-        .expect("failed to run server");
+        .await?;
+    } else {
+        error!("Failed to bind to listen address {}", &cfg.address);
+    }
+
     Ok(())
 }
 
