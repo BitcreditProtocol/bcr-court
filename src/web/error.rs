@@ -1,8 +1,11 @@
 use thiserror::Error;
 
-#[allow(unused)]
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Unauthorized")]
-    Unauthorized,
+    #[error("Internal Server Error")]
+    Internal,
+    #[error("Bad Request: {0}")]
+    BadRequest(String),
+    #[error("Not Found: {0}")]
+    NotFound(String),
 }
