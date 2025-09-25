@@ -55,6 +55,16 @@
                 {{ bill.signature }}
             </td>
         </tr>
+        <tr>
+            <th>
+                Files
+            </th>
+            <td>
+                {% for file_url in bill.file_urls %}
+                    {{ file_url }}
+                {% endfor %}
+            </td>
+        </tr>
     </table>
     <br/>
     <h2>Chain</h2>

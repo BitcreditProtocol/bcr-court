@@ -1,4 +1,6 @@
 address = "0.0.0.0:8000"
+domain = "127.0.0.1"
+cookie_secure = false
 log_level = "INFO"
 db_user = "postgres"
 db_password = "password"

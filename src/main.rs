@@ -2,12 +2,13 @@ use axum::extract::FromRef;
 use config::{Environment, File};
 use std::{env, net::SocketAddr, str::FromStr, sync::Arc};
 use tokio::sync::Mutex;
+use tower_sessions::ExpiredDeletion;
 use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::{Layer, layer::SubscriberExt};
 
 use crate::{
     db::{shared_bill::SharedBillStore, user::UserStore},
-    web::rate_limit::RateLimiter,
+    web::{rate_limit::RateLimiter, session::InMemSessionStore},
 };
 
 mod db;
@@ -16,6 +17,8 @@ mod web;
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct Config {
     pub address: std::net::SocketAddr,
+    pub domain: String,
+    pub cookie_secure: bool,
     pub log_level: String,
     pub db_user: String,
     pub db_password: String,
@@ -65,17 +68,33 @@ pub struct Ctx {
     pub user_store: Arc<dyn UserStore>,
     pub config: Config,
     pub rate_limiter: Arc<Mutex<RateLimiter>>,
+    pub session_store: InMemSessionStore,
 }
 impl Ctx {
     pub async fn new(cfg: &Config) -> Result<Self, anyhow::Error> {
         let db = db::PostgresStore::new(&cfg.db_connection_string()).await?;
         db.init().await?;
         let store = Arc::new(db);
+
+        let session_store = InMemSessionStore::default();
+
+        // Delete expired sessions regularly
+        let session_store_clone = session_store.clone();
+        tokio::spawn(async move {
+            if let Err(e) = session_store_clone
+                .continuously_delete_expired(tokio::time::Duration::from_secs(60))
+                .await
+            {
+                tracing::error!("Error deleting expired sessions: {e}");
+            }
+        });
+
         Ok(Self {
             shared_bill_store: store.clone(),
             user_store: store,
             config: cfg.to_owned(),
             rate_limiter: Arc::new(Mutex::new(RateLimiter::new())),
+            session_store,
         })
     }
 }
