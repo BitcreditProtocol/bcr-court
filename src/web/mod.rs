@@ -59,9 +59,11 @@ pub fn router(ctx: Ctx, _cfg: &Config) -> Router {
         )
         .route("/health", get(health))
         .route("/", get(home))
+        .route("/shared_bills", get(bill::ssr::list))
+        .route("/shared_bill/{id}", get(bill::ssr::detail))
         .route(
             "/v1/bill/receive",
-            post(bill::receive_shared_bill).layer(cors),
+            post(bill::rest::receive_shared_bill).layer(cors),
         );
     Router::new().merge(web).with_state(ctx)
 }

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Bills{% endblock %}
+
+{% block content %}
+<section>
+    <h2>Shared Bills for {{ receiver }}</h2>
+    <table>
+        <tr>
+            <th>
+            </th>
+            <th>
+                Bill ID
+            </th>
+            <th>
+                Shared At
+            </th>
+            <th>
+                Shared By
+            </th>
+        </tr>
+        {% for bill in bills %}
+        <tr>
+            <td>
+                <a href="/shared_bill/{{ bill.id }}">Detail</a>
+            </td>
+            <td>
+                {{ bill.bill_id }}
+            </td>
+            <td>
+                {{ bill.created_at }}
+            </td>
+            <td>
+                {{ bill.sender_node_id }}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</section>
+{% endblock %}

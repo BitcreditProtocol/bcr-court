@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Bill{% endblock %}
+
+{% block content %}
+<section>
+    <div><a href="/shared_bills">back to Shared Bills Overview</a></div>
+    <h2>Shared Bill {{ bill.id }} for {{ bill.receiver_node_id }}</h2>
+    <table>
+        <tr>
+            <th>
+                Bill ID
+            </th>
+            <td>
+                {{ bill.bill_id }}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Shared At
+            </th>
+            <td>
+                {{ bill.created_at }}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Shared By
+            </th>
+            <td>
+                {{ bill.sender_node_id }}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Shared With
+            </th>
+            <td>
+                {{ bill.receiver_node_id }}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Hash
+            </th>
+            <td>
+                {{ bill.hash }}
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Signature
+            </th>
+            <td>
+                {{ bill.signature }}
+            </td>
+        </tr>
+    </table>
+    <br/>
+    <h2>Chain</h2>
+    <div>
+        {% for block in bill_plaintext_chain %}
+        <h3>Block {{ loop.index }}</h3>
+        <pre class="json-block">
+            {{ block }}
+        </pre>
+        {% endfor %}
+    </div>
+    <script>
+        const blocks = document.querySelectorAll('.json-block');
+        for (const pre of blocks) {
+            let block = JSON.parse(pre.textContent);
+            const data = JSON.parse(block.data);
+            block.data = data;
+            pre.textContent = JSON.stringify(block, null, 2);
+        }
+    </script>
+</section>
+{% endblock %}
