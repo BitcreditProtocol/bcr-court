@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<section>
+    <h2>Create Keyset</h2>
+    <form action="/user/do_login" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"/>
+        <table>
+            <tr>
+                <td>
+                    Password:
+                </td>
+                <td>
+                    <input type="password" name="password" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button type="submit">Login</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+</section>
+{% endblock %}

@@ -12,6 +12,7 @@ pub struct BillForDetail {
     pub bill_id: String,
     pub receiver_node_id: String,
     pub sender_node_id: String,
+    pub file_urls: Vec<String>,
     pub hash: String,
     pub signature: String,
     pub created_at: String,

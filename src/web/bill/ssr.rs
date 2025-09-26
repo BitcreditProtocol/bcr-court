@@ -7,7 +7,7 @@ use axum::{
 };
 use bcr_ebill_core::NodeId;
 use chrono::{DateTime, Utc};
-use tracing::error;
+use tracing::{error, warn};
 use uuid::Uuid;
 
 use crate::{
@@ -19,17 +19,20 @@ use crate::{
             rest::decrypt_bill,
         },
         error::Error,
-        templates::{BillDetailTemplate, BillsTemplate, HtmlTemplate},
+        templates::{Auth, BillDetailTemplate, BillsTemplate, HtmlTemplate},
     },
 };
 
-#[tracing::instrument(level = tracing::Level::DEBUG, skip(ctx))]
-pub async fn list(State(ctx): State<Ctx>) -> Result<impl IntoResponse> {
-    // TODO: replace hard-coded node-id, get from session once user mgmt is implemented
-    let node_id = NodeId::from_str(
-        "bitcrt02295fb5f4eeb2f21e01eaf3a2d9a3be10f39db870d28f02146130317973a40ac0",
-    )
-    .expect("valid node_id");
+#[tracing::instrument(level = tracing::Level::DEBUG, skip(ctx, auth))]
+pub async fn list(auth: Auth, State(ctx): State<Ctx>) -> Result<impl IntoResponse> {
+    let user = match auth.user {
+        Some(ref u) => u,
+        None => return Err(Error::Unauthorized),
+    };
+    let node_id = NodeId::from_str(&user.node_id).map_err(|e| {
+        warn!("Node ID from DB is not valid: {e}");
+        Error::Internal
+    })?;
 
     let bills = ctx
         .shared_bill_store
@@ -40,6 +43,7 @@ pub async fn list(State(ctx): State<Ctx>) -> Result<impl IntoResponse> {
             Error::Internal
         })?;
     Ok(HtmlTemplate(BillsTemplate {
+        auth,
         receiver: node_id.to_string(),
         bills: bills
             .into_iter()
@@ -53,13 +57,20 @@ pub async fn list(State(ctx): State<Ctx>) -> Result<impl IntoResponse> {
     }))
 }
 
-#[tracing::instrument(level = tracing::Level::DEBUG, skip(ctx))]
-pub async fn detail(State(ctx): State<Ctx>, Path(id): Path<String>) -> Result<impl IntoResponse> {
-    // TODO: replace hard-coded node-id, get from session once user mgmt is implemented
-    let node_id = NodeId::from_str(
-        "bitcrt02295fb5f4eeb2f21e01eaf3a2d9a3be10f39db870d28f02146130317973a40ac0",
-    )
-    .expect("valid node_id");
+#[tracing::instrument(level = tracing::Level::DEBUG, skip(ctx, auth))]
+pub async fn detail(
+    auth: Auth,
+    State(ctx): State<Ctx>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse> {
+    let user = match auth.user {
+        Some(ref u) => u,
+        None => return Err(Error::Unauthorized),
+    };
+    let node_id = NodeId::from_str(&user.node_id).map_err(|e| {
+        warn!("Node ID from DB is not valid: {e}");
+        Error::Internal
+    })?;
     let user = match ctx.user_store.get_by_node_id(&node_id).await {
         Ok(Some(u)) => u,
         Ok(None) => return Err(Error::NotFound("user not found".to_string())),
@@ -99,10 +110,12 @@ pub async fn detail(State(ctx): State<Ctx>, Path(id): Path<String>) -> Result<im
         .collect();
 
     Ok(HtmlTemplate(BillDetailTemplate {
+        auth,
         bill: BillForDetail {
             id: parsed_id.to_string(),
             bill_id: bill_id.to_string(),
             created_at: format_date(&bill.created_at),
+            file_urls: bill.file_urls.iter().map(|b| b.to_string()).collect(),
             sender_node_id: bill.sender_node_id.to_string(),
             receiver_node_id: bill.receiver_node_id.to_string(),
             hash: bill.hash,

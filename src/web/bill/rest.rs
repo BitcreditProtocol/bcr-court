@@ -220,12 +220,7 @@ pub async fn receive_shared_bill(
             bill_data.files.iter().map(|f| f.hash.clone()).collect();
         let mut file_hashes = Vec::with_capacity(bill_file_hashes.len());
         for file_url in content.file_urls.iter() {
-            let (_, decrypted) = match do_get_encrypted_bill_file_from_request_to_mint(
-                &secret_key,
-                file_url,
-            )
-            .await
-            {
+            let (_, decrypted) = match do_get_encrypted_bill_file(&secret_key, file_url).await {
                 Ok(d) => d,
                 Err(e) => {
                     error!(
@@ -394,7 +389,7 @@ fn get_participants_from_plaintext_bill(
 }
 
 // download and decrypt file from the given URL
-async fn do_get_encrypted_bill_file_from_request_to_mint(
+async fn do_get_encrypted_bill_file(
     secret_key: &SecretKey,
     file_url: &url::Url,
 ) -> Result<(String, Vec<u8>), anyhow::Error> {

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Keyset{% endblock %}
+
+{% block content %}
+<section>
+    <h2>Keyset</h2>
+    <table>
+        <tr>
+            <td>
+                Name:
+            </td>
+            <td>
+                {{ name }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                NodeId (this is public):
+            </td>
+            <td>
+                {{ node_id }}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Seed phrase (this is SECRET! Write this down and never share it with anyone):
+            </td>
+            <td>
+                {{ seed_phrase }}
+            </td>
+        </tr>
+    </table>
+    <a href="/user/login">Login</a>
+</section>
+{% endblock %}
